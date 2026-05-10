@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppRoleCode {
+  CLIENT
+  MANAGER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED_BY_CLIENT
+  CANCELLED_BY_MANAGER
+  NO_SHOW
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  refreshTokenHash String?
+  firstName    String
+  lastName     String
+  phone        String?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  roles        UserRole[]
+  cars         Car[]
+  bookings     Booking[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+}
+
+model Role {
+  id    String      @id @default(cuid())
+  code  AppRoleCode @unique
+  title String
+  users UserRole[]
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model Car {
+  id          String    @id @default(cuid())
+  userId      String
+  brand       String
+  model       String
+  year        Int?
+  vin         String?   @unique
+  plateNumber String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+}
+
+model Service {
+  id              String    @id @default(cuid())
+  name            String
+  durationMinutes Int
+  basePrice       Decimal   @db.Decimal(10, 2)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  bookings        Booking[]
+}
+
+model BookingSlot {
+  id           String    @id @default(cuid())
+  startsAt     DateTime
+  endsAt       DateTime
+  capacity     Int
+  reservedCount Int      @default(0)
+  isBlocked    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+}
+
+model Booking {
+  id             String                @id @default(cuid())
+  userId         String
+  carId          String
+  serviceId      String
+  slotId         String
+  status         BookingStatus         @default(PENDING)
+  comment        String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  car            Car                   @relation(fields: [carId], references: [id], onDelete: Restrict)
+  service        Service               @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  slot           BookingSlot           @relation(fields: [slotId], references: [id], onDelete: Restrict)
+  statusHistory  BookingStatusHistory[]
+
+  @@index([userId])
+  @@index([status, createdAt])
+}
+
+model BookingStatusHistory {
+  id         String        @id @default(cuid())
+  bookingId  String
+  fromStatus BookingStatus
+  toStatus   BookingStatus
+  reason     String?
+  changedAt  DateTime      @default(now())
+  booking    Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, changedAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  channel   String
+  payload   String   @db.Text
+  status    String
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String
+  action       String
+  resourceType String
+  resourceId   String
+  metadataJson String?  @db.Text
+  createdAt    DateTime @default(now())
+  actorUser    User     @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId, createdAt])
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedBy String
+  updatedAt DateTime @updatedAt
+}
