@@ -24,6 +24,7 @@ defineProps<{
   slotsError: string;
   createError: string;
   validationError: string;
+  canSubmit: boolean;
 }>();
 </script>
 
@@ -110,10 +111,10 @@ defineProps<{
 
     <button
       class="mt-3 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-      :disabled="isCreatingBooking"
+      :disabled="!canSubmit"
       @click="$emit('submit')"
     >
-      {{ isCreatingBooking ? "Создание..." : "Создать booking" }}
+      {{ isCreatingBooking ? "Создание..." : "Создать бронь" }}
     </button>
   </article>
 </template>

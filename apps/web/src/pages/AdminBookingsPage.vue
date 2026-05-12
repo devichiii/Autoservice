@@ -20,6 +20,9 @@ async function showHistory(bookingId: string) {
 }
 
 async function updateStatus(bookingId: string, status: BookingStatus) {
+  if (adminBookingsStore.updatingStatusForId) {
+    return;
+  }
   await adminBookingsStore.changeStatus(bookingId, status);
 }
 
@@ -67,6 +70,10 @@ onMounted(async () => {
           </button>
           <button
             class="rounded-md border border-indigo-700 px-2 py-1 text-xs text-indigo-200 hover:bg-indigo-900"
+            :disabled="
+              adminBookingsStore.updatingStatusForId === booking.id ||
+              adminBookingsStore.loadingHistoryForId === booking.id
+            "
             @click="showHistory(booking.id)"
           >
             History

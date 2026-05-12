@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useCarsStore } from "../entities/cars.store";
 
 const carsStore = useCarsStore();
@@ -24,21 +24,40 @@ function resetForm() {
 }
 
 function validateForm(): string | null {
+  const brand = form.brand.trim();
+  const model = form.model.trim();
   const yearValue = String(form.year ?? "").trim();
+  const vin = form.vin.trim();
+  const plateNumber = form.plateNumber.trim();
 
-  if (!form.brand.trim() || !form.model.trim() || !yearValue || !form.vin.trim()) {
-    return "Заполните обязательные поля: brand, model, year, vin.";
+  if (!brand || !model || !yearValue) {
+    return "Заполните обязательные поля: марка, модель и год.";
+  }
+
+  if (!vin && !plateNumber) {
+    return "Укажите VIN или госномер.";
   }
 
   const parsedYear = Number(yearValue);
   if (!Number.isInteger(parsedYear)) {
     return "Поле year должно быть целым числом.";
   }
+  const currentYear = new Date().getFullYear();
+  if (parsedYear < 1900 || parsedYear > currentYear + 1) {
+    return `Поле year должно быть в диапазоне 1900-${currentYear + 1}.`;
+  }
 
   return null;
 }
 
+const canSubmit = computed(() => !validateForm() && !carsStore.isCreating);
+
 async function submit() {
+  if (!canSubmit.value) {
+    validationError.value = validateForm() ?? "";
+    return;
+  }
+
   validationError.value = "";
   const error = validateForm();
   if (error) {
@@ -137,7 +156,7 @@ onMounted(async () => {
         <div class="md:col-span-2">
           <button
             type="submit"
-            :disabled="carsStore.isCreating"
+            :disabled="!canSubmit"
             class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {{ carsStore.isCreating ? "Создание..." : "Создать машину" }}

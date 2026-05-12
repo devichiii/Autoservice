@@ -41,6 +41,9 @@ export const useUsersStore = defineStore("users", {
     },
 
     async updateUser(userId: string, payload: UpdateUserPayload) {
+      if (this.actionInProgressKey) {
+        return;
+      }
       this.actionInProgressKey = `update:${userId}`;
       this.actionError = "";
       this.successMessage = "";
@@ -56,6 +59,9 @@ export const useUsersStore = defineStore("users", {
     },
 
     async addRole(userId: string, roleCode: AppRole) {
+      if (this.actionInProgressKey) {
+        return;
+      }
       this.actionInProgressKey = `add-role:${userId}:${roleCode}`;
       this.actionError = "";
       this.successMessage = "";
@@ -71,6 +77,9 @@ export const useUsersStore = defineStore("users", {
     },
 
     async removeRole(userId: string, roleCode: AppRole) {
+      if (this.actionInProgressKey) {
+        return;
+      }
       this.actionInProgressKey = `remove-role:${userId}:${roleCode}`;
       this.actionError = "";
       this.successMessage = "";

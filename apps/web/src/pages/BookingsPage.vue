@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, watch } from "vue";
+import { computed, onMounted, reactive, watch } from "vue";
 import { useBookingsStore } from "../entities/bookings.store";
 import BookingCreateForm from "../features/bookings/components/BookingCreateForm.vue";
 import MyBookingsList from "../features/bookings/components/MyBookingsList.vue";
@@ -26,11 +26,26 @@ function validateForm() {
   if (!form.carId || !form.serviceId || !form.date || !form.scheduledAt) {
     return "Выберите машину, услугу, дату и слот.";
   }
+  if (bookingsStore.slots.length === 0) {
+    return "Нет доступных слотов для выбранной даты и услуги.";
+  }
 
   return "";
 }
 
+const canSubmit = computed(
+  () =>
+    !bookingsStore.isCreatingBooking &&
+    Boolean(form.carId && form.serviceId && form.date && form.scheduledAt) &&
+    bookingsStore.slots.length > 0
+);
+
 async function createBooking() {
+  if (!canSubmit.value) {
+    validation.message = validateForm();
+    return;
+  }
+
   validation.message = validateForm();
   if (validation.message) {
     return;
@@ -125,6 +140,7 @@ onMounted(async () => {
       :slots-error="bookingsStore.slotsError"
       :create-error="bookingsStore.createError"
       :validation-error="validation.message"
+      :can-submit="canSubmit"
       @submit="createBooking"
     />
 
