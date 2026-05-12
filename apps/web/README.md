@@ -20,6 +20,13 @@ Stage 12: foundation на Vue 3 + Pinia + Vue Router + Tailwind + Axios.
   - создание машины (`POST /cars`);
   - удаление машины (`DELETE /cars/:id`);
   - empty/loading/error состояния.
+- Bookings UI foundation:
+  - список услуг (`GET /services`);
+  - слоты по услуге и дате (`GET /schedule/available-slots`);
+  - создание записи (`POST /bookings`);
+  - список своих записей (`GET /bookings/my`);
+  - отмена записи (`PATCH /bookings/:id/cancel`);
+  - реактивное обновление без перезагрузки страницы.
 
 ## Локальный запуск
 

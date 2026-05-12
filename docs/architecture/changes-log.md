@@ -264,6 +264,34 @@
   - без изменений Telegram bot;
   - без redesign и без тяжелых UI-библиотек.
 
+## 2026-05-12 — Changeset 015 (Stage 14: Bookings UI foundation)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Реализован frontend booking flow без изменения backend API/архитектуры:
+  - `GET /api/v1/services`
+  - `GET /api/v1/schedule/available-slots`
+  - `GET /api/v1/cars/my`
+  - `POST /api/v1/bookings`
+  - `GET /api/v1/bookings/my`
+  - `PATCH /api/v1/bookings/:id/cancel`
+- Добавлен API layer для bookings в frontend (`features/bookings/api`), чтобы page-компонент не содержал HTTP-логику.
+- Добавлен Pinia store `bookings`:
+  - загрузка услуг/машин/слотов/моих записей;
+  - создание booking;
+  - отмена booking с реактивным обновлением списка.
+- Обновлена страница `/bookings`:
+  - список активных услуг с `durationMinutes` и `price`;
+  - форма выбора услуги, даты, слота и машины;
+  - создание записи и показ ошибок/валидации;
+  - список моих записей с возможностью отмены.
+- Добавлены loading/empty/error состояния на всех шагах flow.
+- Обработка бизнес-ошибок backend (включая `400/401/404/409`) выполнена через единый парсер API ошибок и отображение в UI.
+- Границы stage сохранены:
+  - без редизайна, без тяжелых UI-библиотек;
+  - без изменения Telegram bot;
+  - без изменения backend контрактов.
+
 ## Правило ведения
 
 Каждый stage фиксируется отдельной секцией в хронологическом порядке.

@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { apiClient } from "../shared/api-client";
+import { parseApiErrorMessage } from "../shared/api-error";
 import type { Car, CreateCarPayload } from "./cars.types";
 
 type CarsState = {
@@ -9,30 +10,6 @@ type CarsState = {
   deletingCarId: string | null;
   error: string;
 };
-
-function parseApiError(error: unknown): string {
-  if (typeof error === "object" && error !== null && "response" in error) {
-    const maybeResponse = (error as { response?: { data?: unknown } }).response;
-    const data = maybeResponse?.data as
-      | { message?: string | string[]; error?: { message?: string | string[] } }
-      | undefined;
-
-    if (Array.isArray(data?.message)) {
-      return data.message.join(", ");
-    }
-    if (typeof data?.message === "string" && data.message.length > 0) {
-      return data.message;
-    }
-    if (Array.isArray(data?.error?.message)) {
-      return data.error.message.join(", ");
-    }
-    if (typeof data?.error?.message === "string" && data.error.message.length > 0) {
-      return data.error.message;
-    }
-  }
-
-  return "Request failed.";
-}
 
 export const useCarsStore = defineStore("cars", {
   state: (): CarsState => ({
@@ -50,7 +27,7 @@ export const useCarsStore = defineStore("cars", {
         const response = await apiClient.get<Car[]>("/cars/my");
         this.cars = response.data;
       } catch (error: unknown) {
-        this.error = parseApiError(error);
+        this.error = parseApiErrorMessage(error);
       } finally {
         this.isLoading = false;
       }
@@ -63,7 +40,7 @@ export const useCarsStore = defineStore("cars", {
         const response = await apiClient.post<Car>("/cars", payload);
         this.cars = [response.data, ...this.cars];
       } catch (error: unknown) {
-        this.error = parseApiError(error);
+        this.error = parseApiErrorMessage(error);
         throw error;
       } finally {
         this.isCreating = false;
@@ -77,7 +54,7 @@ export const useCarsStore = defineStore("cars", {
         await apiClient.delete(`/cars/${carId}`);
         this.cars = this.cars.filter((car) => car.id !== carId);
       } catch (error: unknown) {
-        this.error = parseApiError(error);
+        this.error = parseApiErrorMessage(error);
       } finally {
         this.deletingCarId = null;
       }
