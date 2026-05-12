@@ -154,6 +154,116 @@
   - `GET /api/v1/cars/my` возвращает созданный автомобиль;
   - ownership policy для `cars` корректно возвращает `404` на чужой ресурс.
 
+## 2026-05-12 — Changeset 010 (Stage 10: Telegram integration foundation)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Добавлен foundation-слой интеграции Telegram поверх backend API (без реализации полноценного Python bot workflow).
+- Реализованы internal endpoint-ы:
+  - `POST /api/v1/integrations/telegram/test`
+  - `POST /api/v1/integrations/telegram/notify`
+- Добавлена защита internal endpoint-ов по secret:
+  - обязательный заголовок `x-telegram-api-key`;
+  - секрет берется из `TELEGRAM_BOT_API_KEY` (env).
+- Интеграция выполнена через существующий `NotificationsService`:
+  - без дублирования notifications-доменной логики;
+  - без прямого доступа Telegram-слоя к БД.
+- Обновлены `apps/api/.env.example`, `apps/telegram-bot/.env.example`, `apps/telegram-bot/README.md` и минимальный scaffold `main.py` для тестового вызова integration endpoint.
+- Границы stage сохранены:
+  - без frontend/payments/analytics/realtime;
+  - без переписывания auth/cars/services/bookings/schedule.
+
+## 2026-05-12 — Changeset 011 (Stage 11 prep: Telegram bot health/env stabilization)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Добавлен internal endpoint проверки доступности интеграционного слоя:
+  - `GET /api/v1/integrations/telegram/health`
+  - endpoint защищен тем же `x-telegram-api-key`, что и `test/notify`.
+- Обновлен Python bot scaffold:
+  - `/health` переведен на internal endpoint `integrations/telegram/health` (без зависимости от JWT service token);
+  - запросы к backend выполняются с `trust_env=False`, чтобы локальные вызовы `127.0.0.1` не ломались из-за глобальных proxy env.
+- Уточнена конфигурация Telegram bot:
+  - в `README` добавлено требование использовать реальный `User.id` для `TELEGRAM_TEST_USER_ID`;
+  - очищен `.env.example` от неиспользуемого `API_BOT_TOKEN`;
+  - в `requirements.txt` зафиксирован `aiohttp-socks` для proxy-сценариев.
+
+## 2026-05-12 — Changeset 012 (Stage 11: Telegram pending + delivered flow)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Реализован внутренний flow доставки уведомлений Telegram через backend API:
+  - `GET /api/v1/integrations/telegram/pending` — получить pending-уведомления;
+  - `PATCH /api/v1/integrations/telegram/notifications/:id/delivered` — пометить уведомление доставленным.
+- Усилен доменный слой `Notification` под доставку:
+  - добавлены `deliveryStatus`, `deliveredAt`, `deliveryError`;
+  - добавлена миграция `20260512065500_notification_delivery_flow`.
+- Telegram bot обновлен без переноса бизнес-логики:
+  - добавлена команда `/pull_pending`;
+  - бот читает pending уведомления только через NestJS API;
+  - после успешной отправки в Telegram бот вызывает backend endpoint `.../delivered`;
+  - ошибки логируются и не останавливают обработку всей пачки.
+- Границы stage сохранены:
+  - без frontend/payments/websocket;
+  - без прямого доступа бота к MySQL;
+  - без большого рефактора существующих модулей.
+
+## 2026-05-12 — Changeset 013 (Stage 12: Frontend foundation)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Подготовлен frontend foundation на текущем стеке (`Vue 3 + Pinia + Vue Router + Tailwind + Axios`) без изменения backend API.
+- Настроен общий API client для web:
+  - `baseURL` берется из `VITE_API_BASE_URL`;
+  - `Authorization: Bearer <accessToken>` добавляется автоматически;
+  - базовая обработка `401` очищает сессию и возвращает пользователя на `/login`.
+- Для локальной работы web -> api включен CORS в backend (`CORS_ORIGIN`, по умолчанию `http://localhost:5173`).
+- Реализован `auth` store в Pinia:
+  - `login`, `logout`, `me`, `hydrate`;
+  - хранение `accessToken`/`refreshToken` в `localStorage`;
+  - состояние текущего пользователя и `isAuthenticated`.
+- Настроен router с protected route guard:
+  - публичный маршрут: `/login`;
+  - защищенные маршруты: `/dashboard`, `/cars`, `/services`, `/bookings`.
+- Добавлен минимальный dark layout и базовые page foundation-компоненты без overengineering.
+- Реализован рабочий login flow:
+  - форма email/password;
+  - `POST /api/v1/auth/login`;
+  - `GET /api/v1/auth/me` после успешного входа;
+  - переход на `/dashboard`.
+- Границы stage сохранены:
+  - без frontend-overbuild, без payments/deploy;
+  - без изменений Telegram bot;
+  - без изменения backend-контрактов.
+
+## 2026-05-12 — Changeset 014 (Stage 13: Cars UI foundation)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Подключен frontend к существующему Cars API без изменения backend:
+  - `GET /api/v1/cars/my`
+  - `POST /api/v1/cars`
+  - `DELETE /api/v1/cars/:id`
+- Реализован Pinia store `cars`:
+  - `fetchCars`, `createCar`, `deleteCar`;
+  - состояния `loading/error` и состояние удаления конкретной записи.
+- Обновлена страница `/cars`:
+  - список автомобилей пользователя;
+  - форма создания автомобиля;
+  - удаление автомобиля;
+  - empty-state, loading-state, показ ошибок API/валидации.
+- Добавлена минимальная frontend-валидация:
+  - обязательные `brand/model/year/vin`;
+  - `year` должен быть числом;
+  - `vin` не может быть пустым.
+- Реактивный UX без перезагрузки страницы:
+  - после `create` новая запись сразу добавляется в список;
+  - после `delete` запись сразу удаляется из списка.
+- Границы stage сохранены:
+  - без изменений backend архитектуры/auth;
+  - без изменений Telegram bot;
+  - без redesign и без тяжелых UI-библиотек.
+
 ## Правило ведения
 
 Каждый stage фиксируется отдельной секцией в хронологическом порядке.

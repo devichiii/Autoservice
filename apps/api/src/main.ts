@@ -7,8 +7,13 @@ import { PrismaService } from "./common/database/prisma.service";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const prismaService = app.get(PrismaService);
+  const corsOrigin = process.env.CORS_ORIGIN ?? "http://localhost:5173";
 
   app.setGlobalPrefix("api/v1");
+  app.enableCors({
+    origin: corsOrigin.split(",").map((origin) => origin.trim()),
+    credentials: true
+  });
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({

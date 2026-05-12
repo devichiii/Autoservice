@@ -28,3 +28,14 @@ Architecture is defined in:
 - `docs/architecture/changes-log.md`
 
 Implementation follows these documents from the first commit to keep code and design aligned.
+
+## Quick start (frontend)
+
+```bash
+npm install
+npm run dev -w @autoservice/web
+```
+
+Frontend uses:
+
+`VITE_API_BASE_URL=http://localhost:3000/api/v1`
