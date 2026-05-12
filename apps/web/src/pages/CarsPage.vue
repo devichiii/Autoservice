@@ -24,11 +24,13 @@ function resetForm() {
 }
 
 function validateForm(): string | null {
-  if (!form.brand.trim() || !form.model.trim() || !form.year.trim() || !form.vin.trim()) {
+  const yearValue = String(form.year ?? "").trim();
+
+  if (!form.brand.trim() || !form.model.trim() || !yearValue || !form.vin.trim()) {
     return "Заполните обязательные поля: brand, model, year, vin.";
   }
 
-  const parsedYear = Number(form.year);
+  const parsedYear = Number(yearValue);
   if (!Number.isInteger(parsedYear)) {
     return "Поле year должно быть целым числом.";
   }
@@ -45,10 +47,11 @@ async function submit() {
   }
 
   try {
+    const yearValue = String(form.year ?? "").trim();
     await carsStore.createCar({
       brand: form.brand.trim(),
       model: form.model.trim(),
-      year: Number(form.year),
+      year: Number(yearValue),
       vin: form.vin.trim(),
       plateNumber: form.plateNumber.trim() || undefined,
       notes: form.notes.trim() || undefined
