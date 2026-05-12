@@ -29,3 +29,4 @@ apps/**/.env.*
 !apps/**/.env.example
 .learning-notes/
 .internal/
+.venv-telegram/
