@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/database/prisma.service";
 
 type CreateCarInput = {
@@ -71,8 +72,28 @@ export class CarsService {
   async deleteOwned(ownerId: string, carId: string) {
     await this.getOwnedById(ownerId, carId);
 
-    return await this.prisma.car.delete({
-      where: { id: carId }
+    const bookingExists = await this.prisma.booking.findFirst({
+      where: { carId },
+      select: { id: true }
     });
+
+    if (bookingExists) {
+      throw new ConflictException(
+        "Нельзя удалить автомобиль, потому что по нему есть записи на обслуживание."
+      );
+    }
+
+    try {
+      return await this.prisma.car.delete({
+        where: { id: carId }
+      });
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+        throw new ConflictException(
+          "Нельзя удалить автомобиль, потому что по нему есть записи на обслуживание."
+        );
+      }
+      throw error;
+    }
   }
 }

@@ -26,6 +26,7 @@ type BookingsState = {
   slotsError: string;
   bookingsError: string;
   createError: string;
+  successMessage: string;
 };
 
 export const useBookingsStore = defineStore("bookings", {
@@ -44,7 +45,8 @@ export const useBookingsStore = defineStore("bookings", {
     carsError: "",
     slotsError: "",
     bookingsError: "",
-    createError: ""
+    createError: "",
+    successMessage: ""
   }),
   actions: {
     async fetchServices() {
@@ -105,9 +107,11 @@ export const useBookingsStore = defineStore("bookings", {
     async createBooking(payload: CreateBookingPayload) {
       this.isCreatingBooking = true;
       this.createError = "";
+      this.successMessage = "";
       try {
         const created = await createBooking(payload);
         this.myBookings = [created, ...this.myBookings];
+        this.successMessage = "Запись успешно создана.";
         return created;
       } catch (error: unknown) {
         this.createError = parseApiErrorMessage(error, "Не удалось создать запись.");
@@ -120,11 +124,13 @@ export const useBookingsStore = defineStore("bookings", {
     async cancelBooking(bookingId: string, comment?: string) {
       this.cancelingBookingId = bookingId;
       this.bookingsError = "";
+      this.successMessage = "";
       try {
         const updated = await cancelBooking(bookingId, comment);
         this.myBookings = this.myBookings.map((booking) =>
           booking.id === bookingId ? { ...booking, ...updated } : booking
         );
+        this.successMessage = "Запись успешно отменена.";
       } catch (error: unknown) {
         this.bookingsError = parseApiErrorMessage(error, "Не удалось отменить запись.");
       } finally {

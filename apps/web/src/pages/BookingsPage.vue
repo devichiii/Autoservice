@@ -86,6 +86,9 @@ onMounted(async () => {
         Полный booking flow: service + date/slots + car -> create -> my bookings -> cancel.
       </p>
     </div>
+    <p v-if="bookingsStore.successMessage" class="text-sm text-emerald-400">
+      {{ bookingsStore.successMessage }}
+    </p>
 
     <article class="rounded-xl border border-slate-800 bg-slate-950 p-4">
       <h2 class="text-lg font-medium">Услуги</h2>

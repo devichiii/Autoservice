@@ -26,14 +26,12 @@ export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Post()
-  @Roles(AppRole.CLIENT)
   create(@CurrentUser() user: AuthUser | undefined, @Body() dto: CreateBookingDto) {
     const userId = this.requireUserId(user);
     return this.bookingsService.createForClient(userId, dto);
   }
 
   @Get("my")
-  @Roles(AppRole.CLIENT)
   listMy(@CurrentUser() user: AuthUser | undefined) {
     const userId = this.requireUserId(user);
     return this.bookingsService.listMy(userId);
@@ -54,7 +52,6 @@ export class BookingsController {
   }
 
   @Patch(":id/cancel")
-  @Roles(AppRole.CLIENT)
   cancel(
     @Param("id") bookingId: string,
     @CurrentUser() user: AuthUser | undefined,

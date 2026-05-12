@@ -292,6 +292,75 @@
   - без изменения Telegram bot;
   - без изменения backend контрактов.
 
+## 2026-05-12 — Changeset 016 (Stage 20: Analytics dashboard UI foundation)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Реализована базовая admin analytics страница:
+  - `/admin/analytics` (доступ только `ADMIN/SUPER_ADMIN`).
+- Добавлен frontend analytics API layer:
+  - `GET /api/v1/analytics/dashboard`
+  - `GET /api/v1/analytics/bookings`
+- Добавлен Pinia store `analytics`:
+  - `fetchDashboardAnalytics`, `fetchBookingsAnalytics`;
+  - состояния `loading/error`.
+- На странице показаны базовые метрики dashboard и сводка по статусам booking без chart libraries.
+- Добавлены loading/error/empty fallback состояния.
+- Навигация и роутинг стабилизированы через единый navigation config:
+  - маршрут `/admin/analytics` добавлен в sidebar по role-based правилам;
+  - CLIENT/MANAGER не видят admin links;
+  - ADMIN/SUPER_ADMIN видят admin links;
+  - выполнен regression-check обязательных routes/navigation.
+- Границы stage сохранены:
+  - без изменения backend и Telegram bot;
+  - без redesign;
+  - без тяжелых графических библиотек.
+
+## 2026-05-12 — Changeset 017 (Stage 21: Frontend smoke-test & stabilization pass)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Исправлены regression/integration баги после ручного frontend smoke-test без добавления новых бизнес-фич.
+- Стабилизировано восстановление сессии после refresh:
+  - router guard теперь выполняет `auth.hydrate()` при наличии `accessToken` и пустом `user`, до проверки protected routes.
+- Исправлена страница `/services`:
+  - убрана заглушка Stage 12;
+  - добавлено минимальное чтение `GET /api/v1/services` с loading/error/empty состояниями.
+- Исправлен backend integration regression, из-за которого рабочие API отдавали `404`:
+  - восстановлены рабочие модули `bookings/services/schedule/notifications` и их контроллеры;
+  - подключен `UsersController` в `UsersModule`;
+  - analytics endpoints сохранены рабочими.
+- Проверены route/navigation regressions:
+  - `/dashboard`, `/cars`, `/services`, `/bookings`, `/notifications`,
+  - `/admin/bookings`, `/admin/users`, `/admin/analytics`;
+  - role-based visibility admin links сохранена (`CLIENT` не видит, `ADMIN/SUPER_ADMIN` видят);
+  - устранен риск `Vue Router: No match found` для обязательных маршрутов.
+
+## 2026-05-12 — Changeset 018 (Stage 22: API error handling & frontend UX states stabilization)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Стабилизирована обработка API ошибок во frontend без изменения бизнес-логики:
+  - добавлен friendly mapping для `400/401/403/404/500` и network error;
+  - технические сообщения (`Forbidden resource`, `Internal server error`, `Network Error`) заменяются на понятные для пользователя.
+- На страницах и в store усилены UX-состояния:
+  - сохранены и выровнены `loading/empty/error`;
+  - добавлен минимальный success feedback после успешных действий.
+- Success feedback добавлен для ключевых операций:
+  - `cars`: добавление/удаление автомобиля;
+  - `bookings`: создание/отмена записи;
+  - `notifications`: mark as read / test notification;
+  - `admin bookings`: смена статуса;
+  - `admin users`: обновление пользователя и ролей.
+- Проверены и сохранены regression-критерии маршрутизации и навигации:
+  - `/dashboard`, `/cars`, `/services`, `/bookings`, `/notifications`,
+  - `/admin/bookings`, `/admin/users`, `/admin/analytics`;
+  - role-based visibility admin links сохранена;
+  - auth restore после refresh и client/admin booking flows не регрессировали.
+- Дополнительно исправлены реальные smoke-test блокеры:
+  - BUG-022-01: удаление автомобиля со связанными booking больше не падает в `500`, backend возвращает управляемый `409 Conflict` с понятным сообщением;
+  - BUG-022-02: снят role-based блокер `403` для client booking endpoints (`POST /bookings`, `GET /bookings/my`, `PATCH /bookings/:id/cancel`) — доступ определяется аутентификацией и ownership policy сервиса.
+
 ## Правило ведения
 
 Каждый stage фиксируется отдельной секцией в хронологическом порядке.
