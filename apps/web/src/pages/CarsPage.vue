@@ -130,6 +130,9 @@ onMounted(async () => {
 
         <p v-if="validationError" class="md:col-span-2 text-sm text-rose-400">{{ validationError }}</p>
         <p v-if="carsStore.error" class="md:col-span-2 text-sm text-rose-400">{{ carsStore.error }}</p>
+        <p v-if="carsStore.successMessage" class="md:col-span-2 text-sm text-emerald-400">
+          {{ carsStore.successMessage }}
+        </p>
 
         <div class="md:col-span-2">
           <button
