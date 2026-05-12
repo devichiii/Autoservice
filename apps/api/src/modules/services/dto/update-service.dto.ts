@@ -25,7 +25,7 @@ export class UpdateServiceDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @Min(0.01)
   price?: number;
 
   @IsOptional()

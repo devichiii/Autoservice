@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/database/prisma.service";
 import { CreateServiceDto } from "./dto/create-service.dto";
 import { UpdateServiceDto } from "./dto/update-service.dto";
@@ -58,7 +59,28 @@ export class ServicesService {
 
   async delete(serviceId: string) {
     await this.ensureExists(serviceId);
-    await this.prisma.service.delete({ where: { id: serviceId } });
+
+    const bookingExists = await this.prisma.booking.findFirst({
+      where: { serviceId },
+      select: { id: true }
+    });
+    if (bookingExists) {
+      throw new ConflictException(
+        "Нельзя удалить услугу, потому что по ней уже есть бронирования."
+      );
+    }
+
+    try {
+      await this.prisma.service.delete({ where: { id: serviceId } });
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+        throw new ConflictException(
+          "Нельзя удалить услугу, потому что по ней уже есть бронирования."
+        );
+      }
+      throw error;
+    }
+
     return { success: true };
   }
 

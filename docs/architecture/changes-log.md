@@ -361,29 +361,6 @@
   - BUG-022-01: удаление автомобиля со связанными booking больше не падает в `500`, backend возвращает управляемый `409 Conflict` с понятным сообщением;
   - BUG-022-02: снят role-based блокер `403` для client booking endpoints (`POST /bookings`, `GET /bookings/my`, `PATCH /bookings/:id/cancel`) — доступ определяется аутентификацией и ownership policy сервиса.
 
-<<<<<<< HEAD
-## 2026-05-12 — Changeset 019 (Stage 26: Frontend validation & form polish)
-
-Область: `C:\Desktop\Projects\Autoservice`
-
-- Улучшена валидация login-формы без изменения backend-контрактов:
-  - добавлен guard от повторного submit;
-  - submit блокируется при пустом `email/password` или активном запросе;
-  - ошибки входа приведены к единому `api-error` parser и отображаются user-friendly.
-- Улучшена форма `cars`:
-  - submit блокируется, если форма невалидна;
-  - обязательны `brand/model/year` и хотя бы одно поле идентификации (`VIN` или госномер);
-  - добавлен диапазон валидации года;
-  - сохранены success/error feedback и controlled сообщение при удалении автомобиля со связанными booking.
-- Улучшена форма создания booking:
-  - submit блокируется, если не выбраны обязательные поля или нет доступных слотов;
-  - добавлен дополнительный guard в обработчике submit;
-  - сохранены ownership/data-isolation правила через текущий API flow.
-- Для admin actions добавлены дополнительные anti-double-submit safeguards:
-  - `admin bookings` — защита от повторной отправки смены статуса на уровне store и page;
-  - `admin users` — блокировка параллельных действий на уровне store.
-- Изменения ограничены frontend-уровнем, без модификации DB schema и backend бизнес-логики.
-=======
 ## 2026-05-12 — Changeset 019 (Stage 25: Backend regression tests for auth/RBAC/ownership)
 
 Область: `C:\Desktop\Projects\Autoservice`
@@ -403,7 +380,48 @@
   - `jest.config.ts`;
   - `test/jest-e2e.json`;
   - npm scripts: `test`, `test:watch`, `test:e2e`.
->>>>>>> origin/feature/stage-25-backend-regression-tests
+
+## 2026-05-12 — Changeset 020 (Stage 26: Frontend validation & form polish)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Улучшена валидация login-формы без изменения backend-контрактов:
+  - добавлен guard от повторного submit;
+  - submit блокируется при пустом `email/password` или активном запросе;
+  - ошибки входа приведены к единому `api-error` parser и отображаются user-friendly.
+- Улучшена форма `cars`:
+  - submit блокируется, если форма невалидна;
+  - обязательны `brand/model/year` и хотя бы одно поле идентификации (`VIN` или госномер);
+  - добавлен диапазон валидации года;
+  - сохранены success/error feedback и controlled сообщение при удалении автомобиля со связанными booking.
+- Улучшена форма создания booking:
+  - submit блокируется, если не выбраны обязательные поля или нет доступных слотов;
+  - добавлен дополнительный guard в обработчике submit;
+  - сохранены ownership/data-isolation правила через текущий API flow.
+- Для admin actions добавлены дополнительные anti-double-submit safeguards:
+  - `admin bookings` — защита от повторной отправки смены статуса на уровне store и page;
+  - `admin users` — блокировка параллельных действий на уровне store.
+
+## 2026-05-12 — Changeset 021 (Stage 27: Admin services management hardening)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Усилено управление услугами на backend:
+  - сохранены RBAC-ограничения (`ADMIN/SUPER_ADMIN` для create/update/delete);
+  - усилена DTO-валидация цены (`price > 0`);
+  - добавлен safe delete: при связанных booking возвращается controlled `409`, без `500`.
+- Добавлены backend regression tests для services:
+  - unit tests сервиса на create/update/delete и conflict-сценарий;
+  - metadata tests контроллера на RBAC доступа.
+- Добавлен минимальный admin services UI без редизайна:
+  - новый route `/admin/services` с guard для `ADMIN/SUPER_ADMIN`;
+  - список услуг, создание, редактирование, удаление;
+  - loading/empty/error/success состояния;
+  - disabled submit при невалидной форме и во время запроса;
+  - защита от двойной отправки.
+- Client flow сохранен:
+  - `/services` для клиента остается read-only;
+  - admin controls и route недоступны `CLIENT`.
 
 ## Правило ведения
 

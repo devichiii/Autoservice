@@ -4,6 +4,7 @@ import { ADMIN_ROUTE_ROLES, APP_ROUTE_PATHS, toChildPath } from "./navigation.co
 import { useAuthStore } from "../entities/auth.store";
 import AdminAnalyticsPage from "../pages/AdminAnalyticsPage.vue";
 import AdminBookingsPage from "../pages/AdminBookingsPage.vue";
+import AdminServicesPage from "../pages/AdminServicesPage.vue";
 import AdminUsersPage from "../pages/AdminUsersPage.vue";
 import AppLayout from "../widgets/AppLayout.vue";
 import BookingsPage from "../pages/BookingsPage.vue";
@@ -55,6 +56,12 @@ const router = createRouter({
           path: toChildPath(APP_ROUTE_PATHS.notifications),
           name: "notifications",
           component: NotificationsPage
+        },
+        {
+          path: toChildPath(APP_ROUTE_PATHS.adminServices),
+          name: "admin-services",
+          component: AdminServicesPage,
+          meta: { requiresRoles: ADMIN_ROUTE_ROLES }
         },
         {
           path: toChildPath(APP_ROUTE_PATHS.adminBookings),
