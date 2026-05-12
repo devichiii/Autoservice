@@ -67,6 +67,10 @@ export const useAdminBookingsStore = defineStore("admin-bookings", {
       }
     },
     async changeStatus(bookingId: string, status: BookingStatus, comment?: string) {
+      if (this.updatingStatusForId) {
+        return;
+      }
+
       this.updatingStatusForId = bookingId;
       this.error = "";
       this.successMessage = "";
