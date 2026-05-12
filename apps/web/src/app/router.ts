@@ -1,7 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../entities/auth.store";
+import AppLayout from "../widgets/AppLayout.vue";
+import BookingsPage from "../pages/BookingsPage.vue";
+import CarsPage from "../pages/CarsPage.vue";
 import DashboardPage from "../pages/DashboardPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
+import ServicesPage from "../pages/ServicesPage.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -14,9 +18,34 @@ const router = createRouter({
     },
     {
       path: "/",
-      name: "dashboard",
-      component: DashboardPage,
-      meta: { requiresAuth: true }
+      component: AppLayout,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: "",
+          redirect: { name: "dashboard" }
+        },
+        {
+          path: "dashboard",
+          name: "dashboard",
+          component: DashboardPage
+        },
+        {
+          path: "cars",
+          name: "cars",
+          component: CarsPage
+        },
+        {
+          path: "services",
+          name: "services",
+          component: ServicesPage
+        },
+        {
+          path: "bookings",
+          name: "bookings",
+          component: BookingsPage
+        }
+      ]
     }
   ]
 });

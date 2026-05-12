@@ -1,17 +1,46 @@
-# Web App
+# Frontend (`apps/web`)
 
-Vue 3 frontend with role-aware dashboard UX.
+Stage 12: foundation на Vue 3 + Pinia + Vue Router + Tailwind + Axios.
 
-## UX direction
+## Что реализовано
 
-- Dark minimal SaaS UI.
-- Reusable dashboard cards and data widgets.
-- Role-based route access.
-- Responsive layout for desktop-first workflow.
+- Базовая структура: `app/pages/shared/entities/features/widgets`.
+- Общий Axios client (`baseURL` из env, Bearer token, обработка `401`).
+- Pinia auth store: `login`, `logout`, `me`, `hydrate`, `isAuthenticated`.
+- Router и route guard для protected страниц.
+- Минимальный dark layout с навигацией.
+- Базовые страницы:
+  - `/login`
+  - `/dashboard`
+  - `/cars`
+  - `/services`
+  - `/bookings`
+- Cars UI foundation:
+  - список машин (`GET /cars/my`);
+  - создание машины (`POST /cars`);
+  - удаление машины (`DELETE /cars/:id`);
+  - empty/loading/error состояния.
+- Bookings UI foundation:
+  - список услуг (`GET /services`);
+  - слоты по услуге и дате (`GET /schedule/available-slots`);
+  - создание записи (`POST /bookings`);
+  - список своих записей (`GET /bookings/my`);
+  - отмена записи (`PATCH /bookings/:id/cancel`);
+  - реактивное обновление без перезагрузки страницы.
 
-## Next implementation steps
+## Локальный запуск
 
-1. Introduce shared UI kit (`Button`, `Card`, `StatusBadge`, `DataTable`).
-2. Add Axios API client with auth interceptors and refresh handling.
-3. Build role-specific navigation for CLIENT, MANAGER, ADMIN, SUPER_ADMIN.
-4. Implement booking and car management screens.
+Из корня проекта:
+
+```bash
+npm install
+npm run dev -w @autoservice/web
+```
+
+## Env
+
+Создайте `apps/web/.env` по примеру `apps/web/.env.example`:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000/api/v1
+```
