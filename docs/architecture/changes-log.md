@@ -311,55 +311,65 @@
   - CLIENT/MANAGER не видят admin links;
   - ADMIN/SUPER_ADMIN видят admin links;
   - выполнен regression-check обязательных routes/navigation.
-- Границы stage сохранены:
-  - без изменения backend и Telegram bot;
-  - без redesign;
-  - без тяжелых графических библиотек.
 
 ## 2026-05-12 — Changeset 017 (Stage 21: Frontend smoke-test & stabilization pass)
 
 Область: `C:\Desktop\Projects\Autoservice`
 
 - Исправлены regression/integration баги после ручного frontend smoke-test без добавления новых бизнес-фич.
-- Стабилизировано восстановление сессии после refresh:
-  - router guard теперь выполняет `auth.hydrate()` при наличии `accessToken` и пустом `user`, до проверки protected routes.
-- Исправлена страница `/services`:
-  - убрана заглушка Stage 12;
-  - добавлено минимальное чтение `GET /api/v1/services` с loading/error/empty состояниями.
-- Исправлен backend integration regression, из-за которого рабочие API отдавали `404`:
-  - восстановлены рабочие модули `bookings/services/schedule/notifications` и их контроллеры;
-  - подключен `UsersController` в `UsersModule`;
-  - analytics endpoints сохранены рабочими.
+- Стабилизировано восстановление сессии после refresh через корректный `hydrate()` в router guard.
+- Исправлена страница `/services` с подключением реального API и fallback-состояниями.
+- Восстановлены рабочие backend-модули `bookings/services/schedule/notifications/users/analytics` на ветке stage.
 - Проверены route/navigation regressions:
   - `/dashboard`, `/cars`, `/services`, `/bookings`, `/notifications`,
-  - `/admin/bookings`, `/admin/users`, `/admin/analytics`;
-  - role-based visibility admin links сохранена (`CLIENT` не видит, `ADMIN/SUPER_ADMIN` видят);
-  - устранен риск `Vue Router: No match found` для обязательных маршрутов.
+  - `/admin/bookings`, `/admin/users`, `/admin/analytics`.
 
 ## 2026-05-12 — Changeset 018 (Stage 22: API error handling & frontend UX states stabilization)
 
 Область: `C:\Desktop\Projects\Autoservice`
 
-- Стабилизирована обработка API ошибок во frontend без изменения бизнес-логики:
+- Стабилизирована обработка API ошибок во frontend:
   - добавлен friendly mapping для `400/401/403/404/500` и network error;
-  - технические сообщения (`Forbidden resource`, `Internal server error`, `Network Error`) заменяются на понятные для пользователя.
-- На страницах и в store усилены UX-состояния:
-  - сохранены и выровнены `loading/empty/error`;
-  - добавлен минимальный success feedback после успешных действий.
-- Success feedback добавлен для ключевых операций:
-  - `cars`: добавление/удаление автомобиля;
-  - `bookings`: создание/отмена записи;
-  - `notifications`: mark as read / test notification;
-  - `admin bookings`: смена статуса;
-  - `admin users`: обновление пользователя и ролей.
-- Проверены и сохранены regression-критерии маршрутизации и навигации:
-  - `/dashboard`, `/cars`, `/services`, `/bookings`, `/notifications`,
-  - `/admin/bookings`, `/admin/users`, `/admin/analytics`;
-  - role-based visibility admin links сохранена;
-  - auth restore после refresh и client/admin booking flows не регрессировали.
-- Дополнительно исправлены реальные smoke-test блокеры:
-  - BUG-022-01: удаление автомобиля со связанными booking больше не падает в `500`, backend возвращает управляемый `409 Conflict` с понятным сообщением;
-  - BUG-022-02: снят role-based блокер `403` для client booking endpoints (`POST /bookings`, `GET /bookings/my`, `PATCH /bookings/:id/cancel`) — доступ определяется аутентификацией и ownership policy сервиса.
+  - технические сообщения заменены на понятные для пользователя.
+- На страницах и в store выровнены `loading/empty/error` и добавлен success feedback.
+- Дополнительно закрыты блокеры smoke-test:
+  - BUG-022-01: удаление автомобиля со связанными booking возвращает управляемый `409`, а не `500`;
+  - BUG-022-02: снят role-based блокер `403` для client booking endpoints при сохранении ownership policy.
+
+## 2026-05-12 — Changeset 019 (Stage 23: Demo readiness & seed data cleanup)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Переработан Prisma seed для локальной демонстрации:
+  - seed теперь создает/обновляет demo-пользователей (`CLIENT`, `MANAGER`, `ADMIN`, `SUPER_ADMIN`);
+  - добавляются реалистичные demo-автомобили и demo-услуги автосервиса;
+  - добавляются demo-bookings с разными статусами для непустых страниц клиента, админ-бронирований и аналитики.
+- Восстановлена согласованность Prisma schema и backend-кода:
+  - добавлена миграция `20260512181000_restore_domain_schema_for_stage22_23`;
+  - возвращены поля доменной модели, которые использует API/UI (`Service.title/price`, `Booking.scheduledAt/endTime/statusComment`, `Notification.type/title/message`, delivery/read поля).
+- Добавлен idempotent-подход для повторного запуска seed:
+  - `upsert` для ролей, пользователей, user-role связей и автомобилей;
+  - `findFirst + update/create` для услуг и демо-записей.
+- Добавлена документация по локальному demo-seed сценарию:
+  - как делать reset локальной БД;
+  - как применять миграции;
+  - как запускать seed;
+  - список локальных demo-аккаунтов и предупреждение, что reset удаляет локальные данные.
+
+## 2026-05-12 — Changeset 020 (Stage 24: README & local setup documentation)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Полностью обновлен корневой `README.md` на русском языке для публичного GitHub onboarding:
+  - описаны цель проекта, стек, роли, high-level архитектура и структура репозитория;
+  - добавлены пошаговые инструкции локального запуска (dependencies, Docker MySQL, env, backend, frontend);
+  - добавлены реальные команды Prisma migrations/seed на основе текущих scripts;
+  - добавлены demo accounts и короткие client/admin demo-сценарии;
+  - добавлены ключевые web routes, ограничения и краткий roadmap.
+- Добавлен отдельный публичный документ `docs/architecture/local-setup.md`:
+  - краткий local setup flow;
+  - минимальный demo-checklist после запуска.
+- Подтверждено, что `.env.example` используется как безопасный шаблон без реальных секретов.
 
 ## Правило ведения
 

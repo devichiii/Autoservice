@@ -113,7 +113,7 @@ defineProps<{
       :disabled="isCreatingBooking"
       @click="$emit('submit')"
     >
-      {{ isCreatingBooking ? "Создание..." : "Создать booking" }}
+      {{ isCreatingBooking ? "Создание..." : "Создать бронь" }}
     </button>
   </article>
 </template>
