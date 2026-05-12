@@ -361,6 +361,26 @@
   - BUG-022-01: удаление автомобиля со связанными booking больше не падает в `500`, backend возвращает управляемый `409 Conflict` с понятным сообщением;
   - BUG-022-02: снят role-based блокер `403` для client booking endpoints (`POST /bookings`, `GET /bookings/my`, `PATCH /bookings/:id/cancel`) — доступ определяется аутентификацией и ownership policy сервиса.
 
+## 2026-05-12 — Changeset 019 (Stage 25: Backend regression tests for auth/RBAC/ownership)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Добавлен foundation backend regression tests без изменения бизнес-логики:
+  - `AuthService` — проверка login/refresh/logout сценариев;
+  - `RolesGuard` — проверка RBAC allow/deny для `CLIENT` и `ADMIN`;
+  - `CarsService` — ownership-ограничения и controlled `409` при удалении автомобиля со связанными booking;
+  - `BookingsService` — ownership/data isolation (`чужой carId`, `listMy`, доступ к чужим booking) и role-gate для смены статуса.
+- Добавлен regression test на metadata контроллера `bookings`:
+  - client endpoints не имеют лишних role-ограничений;
+  - admin endpoints требуют `MANAGER/ADMIN/SUPER_ADMIN`.
+- Добавлен e2e smoke-test защищенного endpoint:
+  - `GET /auth/me` без токена -> `401`;
+  - `GET /auth/me` с валидным JWT -> `200`.
+- Добавлен test runner setup:
+  - `jest.config.ts`;
+  - `test/jest-e2e.json`;
+  - npm scripts: `test`, `test:watch`, `test:e2e`.
+
 ## Правило ведения
 
 Каждый stage фиксируется отдельной секцией в хронологическом порядке.
