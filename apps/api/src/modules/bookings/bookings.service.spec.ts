@@ -102,7 +102,10 @@ describe("BookingsService ownership and RBAC regression", () => {
         booking: {
           update: jest.fn().mockResolvedValue({
             id: "bookingA",
-            status: BookingStatus.CONFIRMED
+            status: BookingStatus.CONFIRMED,
+            scheduledAt: new Date("2026-06-02T09:00:00.000Z"),
+            service: { title: "Test service" },
+            car: { brand: "VW", model: "Golf" }
           })
         },
         bookingStatusHistory: {
@@ -122,7 +125,7 @@ describe("BookingsService ownership and RBAC regression", () => {
       { status: BookingStatus.CONFIRMED, comment: "Approved by admin" }
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       id: "bookingA",
       status: BookingStatus.CONFIRMED
     });

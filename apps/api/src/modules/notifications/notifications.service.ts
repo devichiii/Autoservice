@@ -78,7 +78,17 @@ export class NotificationsService {
     return this.prisma.notification.findMany({
       where: { deliveryStatus: NotificationDeliveryStatus.PENDING },
       orderBy: { createdAt: "asc" },
-      take: limit
+      take: limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
     });
   }
 

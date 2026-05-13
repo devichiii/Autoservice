@@ -30,3 +30,4 @@ apps/**/.env.*
 .learning-notes/
 .internal/
 .venv-telegram/
+apps/telegram-bot/.venv/

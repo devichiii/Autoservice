@@ -55,3 +55,13 @@ Base URL: `/api/v1`
 
 - `GET /analytics/dashboard`
 - `GET /analytics/bookings`
+
+## Integrations — Telegram (internal, не для публичного клиента)
+
+Все маршруты под префиксом `/integrations/telegram`. Доступ только с заголовком `x-telegram-api-key`, значение совпадает с env `TELEGRAM_BOT_API_KEY` на backend. Без ключа — `401`.
+
+- `GET /integrations/telegram/health` — проверка, что internal-слой поднят.
+- `GET /integrations/telegram/pending?limit=` — очередь уведомлений со статусом доставки `PENDING` (лимит `1..100`, по умолчанию `20`), вместе с краткой информацией о пользователе.
+- `PATCH /integrations/telegram/notifications/:id/delivered` — пометить уведомление доставленным (идемпотентно, если уже `DELIVERED`).
+- `PATCH /integrations/telegram/notifications/:id/failed` — тело `{ "reason": "..." }`, статус `FAILED` (опционально для отладки; при ошибке Telegram-по умолчанию запись может оставаться в `PENDING`).
+- `POST /integrations/telegram/test`, `POST /integrations/telegram/notify` — тестовое создание записей уведомлений (использовать аккуратно).

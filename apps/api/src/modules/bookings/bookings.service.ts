@@ -12,6 +12,7 @@ import { hasRequiredRole } from "../../common/rbac/role-hierarchy";
 import { CancelBookingDto } from "./dto/cancel-booking.dto";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { UpdateBookingStatusDto } from "./dto/update-booking-status.dto";
+import { buildBookingCreatedNotice, buildBookingStatusChangedNotice } from "./booking-notification-text";
 
 const MANAGER_PLUS_ROLES = [AppRole.MANAGER, AppRole.ADMIN, AppRole.SUPER_ADMIN];
 const ACTIVE_BOOKING_STATUSES = [
@@ -97,12 +98,20 @@ export class BookingsService {
         }
       });
 
+      const { title, message } = buildBookingCreatedNotice({
+        bookingId: createdBooking.id,
+        scheduledAt: createdBooking.scheduledAt,
+        serviceTitle: createdBooking.service.title,
+        carBrand: createdBooking.car.brand,
+        carModel: createdBooking.car.model
+      });
+
       await tx.notification.create({
         data: {
           userId,
           type: NotificationType.BOOKING_CREATED,
-          title: "Запись создана",
-          message: `Создана запись #${createdBooking.id} на ${startTime.toISOString()}.`
+          title,
+          message
         }
       });
 
@@ -160,24 +169,28 @@ export class BookingsService {
       where: {
         id: bookingId,
         userId
+      },
+      include: {
+        car: true,
+        service: true
       }
     });
 
     if (!booking) {
-      throw new NotFoundException("Booking not found.");
+      throw new NotFoundException("Запись не найдена.");
     }
 
     if (booking.status === BookingStatus.COMPLETED) {
-      throw new ConflictException("Completed booking cannot be canceled.");
+      throw new ConflictException("Завершённую запись нельзя отменить.");
     }
 
     if (booking.status === BookingStatus.CANCELED) {
-      throw new ConflictException("Booking is already canceled.");
+      throw new ConflictException("Запись уже отменена.");
     }
 
     const allowedTransitions = ALLOWED_STATUS_TRANSITIONS[booking.status];
     if (!allowedTransitions.includes(BookingStatus.CANCELED)) {
-      throw new ConflictException("Status transition is not allowed.");
+      throw new ConflictException("Отменить запись на этом статусе нельзя.");
     }
 
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -203,12 +216,22 @@ export class BookingsService {
         }
       });
 
+      const { title: nTitle, message: nBody } = buildBookingStatusChangedNotice({
+        bookingId,
+        scheduledAt: updatedBooking.scheduledAt,
+        serviceTitle: updatedBooking.service.title,
+        carBrand: updatedBooking.car.brand,
+        carModel: updatedBooking.car.model,
+        fromStatus: booking.status,
+        toStatus: BookingStatus.CANCELED
+      });
+
       await tx.notification.create({
         data: {
           userId,
           type: NotificationType.BOOKING_STATUS_CHANGED,
-          title: "Статус записи изменен",
-          message: `Запись #${bookingId}: ${booking.status} -> ${BookingStatus.CANCELED}.`
+          title: nTitle,
+          message: nBody
         }
       });
 
@@ -267,12 +290,22 @@ export class BookingsService {
         }
       });
 
+      const { title: nTitle, message: nBody } = buildBookingStatusChangedNotice({
+        bookingId,
+        scheduledAt: updatedBooking.scheduledAt,
+        serviceTitle: updatedBooking.service.title,
+        carBrand: updatedBooking.car.brand,
+        carModel: updatedBooking.car.model,
+        fromStatus: booking.status,
+        toStatus: dto.status
+      });
+
       await tx.notification.create({
         data: {
           userId: booking.userId,
           type: NotificationType.BOOKING_STATUS_CHANGED,
-          title: "Статус записи изменен",
-          message: `Запись #${bookingId}: ${booking.status} -> ${dto.status}.`
+          title: nTitle,
+          message: nBody
         }
       });
 
