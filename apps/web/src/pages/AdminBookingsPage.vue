@@ -11,11 +11,39 @@ const selectedHistory = computed(() =>
     : []
 );
 
+const STATUS_LABELS: Record<BookingStatus, string> = {
+  PENDING: "Ожидает",
+  CONFIRMED: "Подтверждена",
+  IN_PROGRESS: "В работе",
+  COMPLETED: "Завершена",
+  CANCELED: "Отменена"
+};
+
+const NEXT_ACTION_LABELS: Partial<Record<BookingStatus, string>> = {
+  CONFIRMED: "Подтвердить",
+  IN_PROGRESS: "В работу",
+  COMPLETED: "Завершить",
+  CANCELED: "Отменить"
+};
+
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
 }
 
+function statusLabel(status: BookingStatus) {
+  return STATUS_LABELS[status] ?? status;
+}
+
+function nextActionLabel(status: BookingStatus) {
+  return NEXT_ACTION_LABELS[status] ?? status;
+}
+
+const anyStatusUpdateInFlight = computed(() => Boolean(adminBookingsStore.updatingStatusForId));
+
 async function showHistory(bookingId: string) {
+  if (anyStatusUpdateInFlight.value) {
+    return;
+  }
   await adminBookingsStore.fetchHistory(bookingId);
 }
 
@@ -36,7 +64,7 @@ onMounted(async () => {
     <div>
       <h1 class="text-2xl font-semibold">Admin bookings</h1>
       <p class="mt-1 text-sm text-slate-400">
-        Просмотр всех записей и смена статусов для ADMIN/SUPER_ADMIN.
+        Просмотр всех записей и смена статусов для MANAGER/ADMIN/SUPER_ADMIN. Доступны только допустимые переходы.
       </p>
     </div>
 
@@ -52,7 +80,7 @@ onMounted(async () => {
       <div v-for="booking in adminBookingsStore.bookings" :key="booking.id" class="mb-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
         <p class="text-sm">
           <span class="text-slate-400">id:</span> {{ booking.id }} |
-          <span class="text-slate-400">status:</span> {{ booking.status }}
+          <span class="text-slate-400">статус:</span> {{ statusLabel(booking.status) }}
         </p>
         <p class="mt-1 text-xs text-slate-400">
           user: {{ booking.user?.email ?? booking.userId }} | service: {{ booking.service.title }} | at:
@@ -62,21 +90,20 @@ onMounted(async () => {
           <button
             v-for="nextStatus in adminBookingsStore.allowedTransitions(booking.status)"
             :key="`${booking.id}:${nextStatus}`"
-            class="rounded-md border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800 disabled:opacity-60"
-            :disabled="adminBookingsStore.updatingStatusForId === booking.id"
+            class="rounded-md border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="anyStatusUpdateInFlight"
             @click="updateStatus(booking.id, nextStatus)"
           >
-            {{ nextStatus }}
+            {{ nextActionLabel(nextStatus) }}
           </button>
           <button
-            class="rounded-md border border-indigo-700 px-2 py-1 text-xs text-indigo-200 hover:bg-indigo-900"
+            class="rounded-md border border-indigo-700 px-2 py-1 text-xs text-indigo-200 hover:bg-indigo-900 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="
-              adminBookingsStore.updatingStatusForId === booking.id ||
-              adminBookingsStore.loadingHistoryForId === booking.id
+              anyStatusUpdateInFlight || adminBookingsStore.loadingHistoryForId === booking.id
             "
             @click="showHistory(booking.id)"
           >
-            History
+            История
           </button>
         </div>
       </div>
@@ -93,7 +120,15 @@ onMounted(async () => {
       </p>
       <ul v-else class="mt-2 space-y-2">
         <li v-for="item in selectedHistory" :key="item.id" class="rounded-md border border-slate-800 bg-slate-950 p-2 text-xs">
-          {{ item.fromStatus }} -> {{ item.toStatus }} | {{ formatDateTime(item.changedAt) }}
+          {{ statusLabel(item.fromStatus) }} → {{ statusLabel(item.toStatus) }} | {{ formatDateTime(item.changedAt) }}
+          <span class="text-slate-500">
+            | кто:
+            {{
+              item.changedByUser
+                ? `${item.changedByUser.firstName} ${item.changedByUser.lastName} (${item.changedByUser.email})`
+                : item.changedByUserId
+            }}
+          </span>
           <span v-if="item.reason">| {{ item.reason }}</span>
         </li>
       </ul>

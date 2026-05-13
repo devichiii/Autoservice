@@ -164,20 +164,20 @@ export class BookingsService {
     });
 
     if (!booking) {
-      throw new NotFoundException("Booking not found.");
+      throw new NotFoundException("Запись не найдена.");
     }
 
     if (booking.status === BookingStatus.COMPLETED) {
-      throw new ConflictException("Completed booking cannot be canceled.");
+      throw new ConflictException("Завершённую запись нельзя отменить.");
     }
 
     if (booking.status === BookingStatus.CANCELED) {
-      throw new ConflictException("Booking is already canceled.");
+      throw new ConflictException("Запись уже отменена.");
     }
 
     const allowedTransitions = ALLOWED_STATUS_TRANSITIONS[booking.status];
     if (!allowedTransitions.includes(BookingStatus.CANCELED)) {
-      throw new ConflictException("Status transition is not allowed.");
+      throw new ConflictException("Отменить запись на этом статусе нельзя.");
     }
 
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -223,7 +223,7 @@ export class BookingsService {
     dto: UpdateBookingStatusDto
   ) {
     if (!this.hasManagerPlusAccess(actorRoles)) {
-      throw new ForbiddenException("Insufficient permissions.");
+      throw new ForbiddenException("Недостаточно прав для смены статуса записи.");
     }
 
     const booking = await this.prisma.booking.findUnique({
@@ -231,16 +231,16 @@ export class BookingsService {
     });
 
     if (!booking) {
-      throw new NotFoundException("Booking not found.");
+      throw new NotFoundException("Запись не найдена.");
     }
 
     if (booking.status === dto.status) {
-      throw new ConflictException("Booking already has this status.");
+      throw new ConflictException("Запись уже находится в этом статусе.");
     }
 
     const allowedTransitions = ALLOWED_STATUS_TRANSITIONS[booking.status];
     if (!allowedTransitions.includes(dto.status)) {
-      throw new ConflictException("Status transition is not allowed.");
+      throw new ConflictException("Переход в выбранный статус недопустим.");
     }
 
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -295,11 +295,11 @@ export class BookingsService {
     });
 
     if (!booking) {
-      throw new NotFoundException("Booking not found.");
+      throw new NotFoundException("Запись не найдена.");
     }
 
     if (!this.hasManagerPlusAccess(roles) && booking.userId !== userId) {
-      throw new NotFoundException("Booking not found.");
+      throw new NotFoundException("Запись не найдена.");
     }
 
     return booking;
