@@ -39,3 +39,13 @@ npm run dev -w @autoservice/web
 Frontend uses:
 
 `VITE_API_BASE_URL=http://localhost:3000/api/v1`
+
+## Demo seed (local login)
+
+After migrating the API database, run seed to create roles, demo users, services, cars and sample bookings:
+
+```bash
+npm run prisma:seed -w @autoservice/api
+```
+
+Details and account table: `docs/architecture/demo-seed.md` (Russian).
