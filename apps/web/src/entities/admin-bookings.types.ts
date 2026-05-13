@@ -14,9 +14,15 @@ export type AdminBookingItem = BookingItem & {
 export type AdminBookingHistoryItem = {
   id: string;
   bookingId: string;
-  changedByUserId: string | null;
+  changedByUserId: string;
   fromStatus: BookingStatus;
   toStatus: BookingStatus;
   reason: string | null;
   changedAt: string;
+  changedByUser?: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
 };

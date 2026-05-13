@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { BookingItem } from "../../../entities/bookings.types";
+import type { BookingStatus } from "../../../entities/bookings.types";
 
 defineProps<{
   bookings: BookingItem[];
@@ -7,6 +7,12 @@ defineProps<{
   error: string;
   cancelingBookingId: string | null;
 }>();
+
+const CLIENT_CANCELABLE: BookingStatus[] = ["PENDING", "CONFIRMED"];
+
+function canClientCancel(status: BookingStatus) {
+  return CLIENT_CANCELABLE.includes(status);
+}
 </script>
 
 <template>
@@ -40,15 +46,21 @@ defineProps<{
 
           <button
             class="rounded-md border border-rose-700 px-3 py-1.5 text-xs text-rose-300 hover:bg-rose-950 disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="booking.status === 'CANCELED' || cancelingBookingId === booking.id"
+            :disabled="
+              booking.status === 'CANCELED' ||
+              !canClientCancel(booking.status) ||
+              cancelingBookingId === booking.id
+            "
             @click="$emit('cancel', booking.id)"
           >
             {{
               booking.status === "CANCELED"
-                ? "Уже отменено"
-                : cancelingBookingId === booking.id
-                  ? "Отмена..."
-                  : "Отменить"
+                ? "Отменено"
+                : !canClientCancel(booking.status)
+                  ? "Отмена недоступна"
+                  : cancelingBookingId === booking.id
+                    ? "Отмена..."
+                    : "Отменить"
             }}
           </button>
         </div>
