@@ -41,4 +41,8 @@ export class TelegramIntegrationService {
   markNotificationDelivered(notificationId: string) {
     return this.notificationsService.markAsDelivered(notificationId);
   }
+
+  markNotificationDeliveryFailed(notificationId: string, reason: string) {
+    return this.notificationsService.markAsFailed(notificationId, reason);
+  }
 }

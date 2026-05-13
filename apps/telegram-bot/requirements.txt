@@ -1,3 +1,6 @@
+# CPython 3.11–3.13 (рекомендуется 3.12). На Python 3.14 сборка pydantic-core часто падает
+# (PyO3 «newer than maximum supported») — создайте venv на 3.12: py -3.12 -m venv .venv
 aiogram==3.10.0
+aiohttp-socks>=0.8.4
 httpx==0.27.0
 python-dotenv==1.0.1

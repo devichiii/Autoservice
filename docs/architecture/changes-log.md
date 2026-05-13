@@ -361,8 +361,27 @@
   - BUG-022-01: удаление автомобиля со связанными booking больше не падает в `500`, backend возвращает управляемый `409 Conflict` с понятным сообщением;
   - BUG-022-02: снят role-based блокер `403` для client booking endpoints (`POST /bookings`, `GET /bookings/my`, `PATCH /bookings/:id/cancel`) — доступ определяется аутентификацией и ownership policy сервиса.
 
-<<<<<<< HEAD
-## 2026-05-12 — Changeset 019 (Stage 26: Frontend validation & form polish)
+## 2026-05-12 — Changeset 019 (Stage 25: Backend regression tests for auth/RBAC/ownership)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Добавлен foundation backend regression tests без изменения бизнес-логики:
+  - `AuthService` — проверка login/refresh/logout сценариев;
+  - `RolesGuard` — проверка RBAC allow/deny для `CLIENT` и `ADMIN`;
+  - `CarsService` — ownership-ограничения и controlled `409` при удалении автомобиля со связанными booking;
+  - `BookingsService` — ownership/data isolation (`чужой carId`, `listMy`, доступ к чужим booking) и role-gate для смены статуса.
+- Добавлен regression test на metadata контроллера `bookings`:
+  - client endpoints не имеют лишних role-ограничений;
+  - admin endpoints требуют `MANAGER/ADMIN/SUPER_ADMIN`.
+- Добавлен e2e smoke-test защищенного endpoint:
+  - `GET /auth/me` без токена -> `401`;
+  - `GET /auth/me` с валидным JWT -> `200`.
+- Добавлен test runner setup:
+  - `jest.config.ts`;
+  - `test/jest-e2e.json`;
+  - npm scripts: `test`, `test:watch`, `test:e2e`.
+
+## 2026-05-12 — Changeset 020 (Stage 26: Frontend validation & form polish)
 
 Область: `C:\Desktop\Projects\Autoservice`
 
@@ -383,27 +402,30 @@
   - `admin bookings` — защита от повторной отправки смены статуса на уровне store и page;
   - `admin users` — блокировка параллельных действий на уровне store.
 - Изменения ограничены frontend-уровнем, без модификации DB schema и backend бизнес-логики.
-=======
-## 2026-05-12 — Changeset 019 (Stage 25: Backend regression tests for auth/RBAC/ownership)
+
+## 2026-05-13 — Changeset 021 (Stage 27: Admin services management hardening)
 
 Область: `C:\Desktop\Projects\Autoservice`
 
-- Добавлен foundation backend regression tests без изменения бизнес-логики:
-  - `AuthService` — проверка login/refresh/logout сценариев;
-  - `RolesGuard` — проверка RBAC allow/deny для `CLIENT` и `ADMIN`;
-  - `CarsService` — ownership-ограничения и controlled `409` при удалении автомобиля со связанными booking;
-  - `BookingsService` — ownership/data isolation (`чужой carId`, `listMy`, доступ к чужим booking) и role-gate для смены статуса.
-- Добавлен regression test на metadata контроллера `bookings`:
-  - client endpoints не имеют лишних role-ограничений;
-  - admin endpoints требуют `MANAGER/ADMIN/SUPER_ADMIN`.
-- Добавлен e2e smoke-test защищенного endpoint:
-  - `GET /auth/me` без токена -> `401`;
-  - `GET /auth/me` с валидным JWT -> `200`.
-- Добавлен test runner setup:
-  - `jest.config.ts`;
-  - `test/jest-e2e.json`;
-  - npm scripts: `test`, `test:watch`, `test:e2e`.
->>>>>>> origin/feature/stage-25-backend-regression-tests
+- Усилено админское управление услугами: безопасное удаление при связанных booking (`409`), строгая валидация цены, regression-тесты сервисов/контроллера и admin UI `/admin/services`.
+
+## 2026-05-13 — Changeset 022 (Stage 28: Booking lifecycle polish)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Зафиксирован конечный автомат статусов записи, сообщения `409/403`, расширены unit-тесты lifecycle, улучшены страницы клиентских и админских записей без редизайна.
+
+## 2026-05-13 — Changeset 023 (Stage 29: Telegram notifications integration polish)
+
+Область: `C:\Desktop\Projects\Autoservice`
+
+- Тексты уведомлений по событиям booking (создание, смена статуса, отмена клиентом) расширены: услуга, авто, локальное время, статус; типы `BOOKING_CREATED` / `BOOKING_STATUS_CHANGED` без дублирования отдельной сущности для отмены (отмена = `BOOKING_STATUS_CHANGED` с `CANCELED`).
+- Internal API `GET /integrations/telegram/pending` возвращает уведомления вместе с краткими данными пользователя (email, ФИО), лимит запроса ограничен и парсится безопасно (`1..100`).
+- Добавлен необязательный internal endpoint `PATCH .../notifications/:id/failed` для фиксации ошибки доставки в `deliveryError` / `FAILED` (бот по умолчанию не вызывает его — при сбое отправки в Telegram уведомление остаётся в `PENDING` для повторной попытки).
+- Python-бот: проверка связи через `GET .../integrations/telegram/health`, фоновый цикл доставки pending, заголовок `x-telegram-api-key`, одна целевая беседа `TELEGRAM_NOTIFY_CHAT_ID` (dev/ops), успешная отправка завершается `PATCH .../delivered`, ошибки логируются поштучно и не валят процесс.
+- Для httpx-вызовов к backend по умолчанию `trust_env=false`, чтобы глобальный SOCKS (`ALL_PROXY`) не ломал запросы на `localhost` без `socksio`; при необходимости — `HTTPX_TRUST_ENV=true`.
+- **Prisma:** обновлена схема под цепочку доставки и текущий код API: у `Notification` — `NotificationType`, `NotificationDeliveryStatus`, поля доставки (`deliveredAt`, `deliveryError`); модели booking/service и статусы записи приведены в соответствие с lifecycle из кода ветки (единый `CANCELED`, окно `scheduledAt`/`endTime`, услуга `title`/`price` и др.). После слияния нужна **новая SQL-миграция** или осознанный `prisma migrate dev` / пересбор dev-базы под актуальный `schema.prisma` — в каталоге `migrations` по-прежнему лежит только старый `init`, он не отражает эту схему.
+- Telegram-бот по-прежнему **не** подключается к MySQL; только HTTP к `integrations/telegram/*` с `x-telegram-api-key`.
 
 ## Правило ведения
 
